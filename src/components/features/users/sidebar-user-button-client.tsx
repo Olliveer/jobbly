@@ -23,12 +23,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
-
-type User = {
-  email: string;
-  name: string;
-  imageUrl: string;
-};
+import { type User } from "@/drizzle/schema";
 
 type SidebarUserButtonClientProps = {
   user: User;

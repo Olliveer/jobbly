@@ -2,7 +2,11 @@ import { env } from "@/data/env/server";
 import { inngest } from "../client";
 import { Webhook } from "svix";
 import { NonRetriableError } from "inngest";
-import { insertUser } from "@/components/features/users/db/users";
+import {
+  deleteUser,
+  insertUser,
+  updateUser,
+} from "@/components/features/users/db/users";
 import { insertUserNotificationSettings } from "@/components/features/users/db/user-notification-settings";
 
 function verifyWebhook({
@@ -51,10 +55,78 @@ export const clerkCreateUser = inngest.createFunction(
       return userData.id;
     });
 
-    await step.run("create-user-notification-settings", async () => {
+    await step.run("Create User Notification Settings", async () => {
       await insertUserNotificationSettings({
         userId,
       });
+    });
+  }
+);
+
+export const clerkUpdateUser = inngest.createFunction(
+  { id: "clerk/update-db-user", name: "Clerk - Update DB User" },
+  {
+    event: "clerk/user.updated",
+  },
+  async ({ event, step }) => {
+    try {
+      await step.run("verify-webhook", () => verifyWebhook(event.data));
+    } catch {
+      // If the webhook is not verified, throw a non-retriable error
+      // This will prevent the function from being retried
+      throw new NonRetriableError("Failed to verify webhook");
+    }
+
+    const userId = await step.run("update-user", async () => {
+      const userData = event.data.data;
+      const email = userData.email_addresses.find(
+        (email) => email.id === userData.primary_email_address_id
+      );
+
+      if (email === null) {
+        throw new NonRetriableError("No primary email address found");
+      }
+
+      await updateUser(userData.id, {
+        name: `${userData.first_name} ${userData.last_name}`,
+        email: email!.email_address,
+        imageUrl: userData.image_url,
+        updatedAt: new Date(userData.updated_at),
+      });
+
+      return userData.id;
+    });
+
+    await step.run("update-user-notification-settings", async () => {
+      await insertUserNotificationSettings({
+        userId,
+      });
+    });
+  }
+);
+
+export const clerkDeleteUser = inngest.createFunction(
+  { id: "clerk/delete-db-user", name: "Clerk - Delete DB User" },
+  {
+    event: "clerk/user.deleted",
+  },
+  async ({ event, step }) => {
+    try {
+      await step.run("Verify Webhook", () => verifyWebhook(event.data));
+    } catch {
+      // If the webhook is not verified, throw a non-retriable error
+      // This will prevent the function from being retried
+      throw new NonRetriableError("Failed to verify webhook");
+    }
+
+    await step.run("delete-user", async () => {
+      const { id } = event.data.data;
+
+      if (!id) {
+        throw new NonRetriableError("No user id found");
+      }
+
+      await deleteUser(id);
     });
   }
 );

@@ -9,3 +9,5 @@ export const UserTable = pgTable("users", {
   createdAt,
   updatedAt,
 });
+
+export type User = typeof UserTable.$inferSelect;
