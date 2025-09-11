@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { getUser } from "@/components/features/users/db/users";
+import { getUser } from "@/features/users/db/users";
 
 export async function getCurrentUser({
   allData = false,

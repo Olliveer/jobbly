@@ -72,6 +72,7 @@ export default function SidebarUserButtonClient({
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <SignOutButton>
             <DropdownMenuItem>
               <LogInIcon className="mr-1" />

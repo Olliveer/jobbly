@@ -1,4 +1,4 @@
-import { SidebarUserButton } from "@/components/features/users/sidebar-user-button";
+import { SidebarUserButton } from "@/features/users/sidebar-user-button";
 import { AppSidebar } from "@/components/sidebar/app-side-bar";
 import SidebarNavMenuGroup from "@/components/sidebar/sidebar-nav-menu-group";
 import {

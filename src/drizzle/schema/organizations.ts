@@ -19,3 +19,5 @@ export const organizationRelations = relations(
     organizationUserSettings: many(OrganizationUserSettingsTable),
   })
 );
+
+export type Organization = typeof OrganizationTable.$inferSelect;

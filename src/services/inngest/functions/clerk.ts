@@ -2,12 +2,13 @@ import { env } from "@/data/env/server";
 import { inngest } from "../client";
 import { Webhook } from "svix";
 import { NonRetriableError } from "inngest";
+import { deleteUser, insertUser, updateUser } from "@/features/users/db/users";
+import { insertUserNotificationSettings } from "@/features/users/db/user-notification-settings";
 import {
-  deleteUser,
-  insertUser,
-  updateUser,
-} from "@/components/features/users/db/users";
-import { insertUserNotificationSettings } from "@/components/features/users/db/user-notification-settings";
+  deleteOrganization,
+  insertOrganization,
+  updateOrganization,
+} from "@/features/organizations/db/organizations";
 
 function verifyWebhook({
   raw,
@@ -19,6 +20,7 @@ function verifyWebhook({
   return new Webhook(env.CLERK_WEBHOOK_SECRET).verify(raw, headers);
 }
 
+// USERS
 export const clerkCreateUser = inngest.createFunction(
   { id: "clerk/create-db-user", name: "Clerk - Create DB User" },
   {
@@ -127,6 +129,96 @@ export const clerkDeleteUser = inngest.createFunction(
       }
 
       await deleteUser(id);
+    });
+  }
+);
+
+// ORGANIZATIONS
+export const clerkCreateOrganization = inngest.createFunction(
+  {
+    id: "clerk/create-db-organization",
+    name: "Clerk - Create DB Organization",
+  },
+  {
+    event: "clerk/organization.created",
+  },
+  async ({ event, step }) => {
+    try {
+      await step.run("Verify Webhook", () => verifyWebhook(event.data));
+    } catch {
+      // If the webhook is not verified, throw a non-retriable error
+      // This will prevent the function from being retried
+      throw new NonRetriableError("Failed to verify webhook");
+    }
+
+    await step.run("create-organization", async () => {
+      const organizationData = event.data.data;
+
+      await insertOrganization({
+        id: organizationData.id,
+        name: organizationData.name,
+        imageUrl: organizationData.image_url,
+        createdAt: new Date(organizationData.created_at),
+        updatedAt: new Date(organizationData.updated_at),
+      });
+    });
+  }
+);
+
+export const clerkUpdateOrganization = inngest.createFunction(
+  {
+    id: "clerk/update-db-organization",
+    name: "Clerk - Update DB Organization",
+  },
+  {
+    event: "clerk/organization.updated",
+  },
+  async ({ event, step }) => {
+    try {
+      await step.run("verify-webhook", () => verifyWebhook(event.data));
+    } catch {
+      // If the webhook is not verified, throw a non-retriable error
+      // This will prevent the function from being retried
+      throw new NonRetriableError("Failed to verify webhook");
+    }
+
+    await step.run("update-organization", async () => {
+      const organizationData = event.data.data;
+
+      await updateOrganization(organizationData.id, {
+        name: organizationData.name,
+        imageUrl: organizationData.image_url,
+        updatedAt: new Date(organizationData.updated_at),
+      });
+    });
+  }
+);
+
+export const clerkDeleteOrganization = inngest.createFunction(
+  {
+    id: "clerk/delete-db-organization",
+    name: "Clerk - Delete DB Organization",
+  },
+  {
+    event: "clerk/organization.deleted",
+  },
+  async ({ event, step }) => {
+    try {
+      await step.run("Verify Webhook", () => verifyWebhook(event.data));
+    } catch {
+      // If the webhook is not verified, throw a non-retriable error
+      // This will prevent the function from being retried
+      throw new NonRetriableError("Failed to verify webhook");
+    }
+
+    await step.run("delete-organization", async () => {
+      const { id } = event.data.data;
+
+      if (!id) {
+        throw new NonRetriableError("No organization id found");
+      }
+
+      await deleteOrganization(id);
     });
   }
 );
