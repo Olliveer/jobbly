@@ -13,7 +13,13 @@ import { OrganizationTable } from "./organizations";
 import { relations } from "drizzle-orm";
 import { JobListingApplicationTable } from "./job-listing-application";
 
-export const wageIntervals = ["hourly", "daily", "weekly", "monthly"] as const;
+export const wageIntervals = [
+  "hourly",
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+] as const;
 export type WageInterval = (typeof wageIntervals)[number];
 export const wageIntervalEnum = pgEnum(
   "job_listing_wage_interval",
