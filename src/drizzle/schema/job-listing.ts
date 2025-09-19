@@ -60,10 +60,9 @@ export const JobListingTable = pgTable(
   "job_listings",
   {
     id,
+
     organizationId: varchar()
-      .references(() => OrganizationTable.id, {
-        onDelete: "cascade",
-      })
+      .references(() => OrganizationTable.id, { onDelete: "cascade" })
       .notNull(),
     title: varchar("title").notNull(),
     description: text("description").notNull(),

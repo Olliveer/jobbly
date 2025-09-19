@@ -20,7 +20,7 @@ import {
   InsertTable,
 } from "@mdxeditor/editor";
 
-const markdownClassNames =
+export const markdownClassNames =
   "max-w-none prose prose-neutral dark:prose-invert font-sans";
 
 export default function Markdown({

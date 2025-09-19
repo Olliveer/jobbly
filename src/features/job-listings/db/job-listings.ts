@@ -1,6 +1,6 @@
 import { db } from "@/drizzle/db";
 import { JobListingTable } from "@/drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export async function getMostReccentJobListing({ orgId }: { orgId: string }) {
   return await db.query.JobListingTable.findFirst({
@@ -11,12 +11,26 @@ export async function getMostReccentJobListing({ orgId }: { orgId: string }) {
 }
 
 export async function insertJobListing(
-  data: typeof JobListingTable.$inferInsert
+  jobListing: typeof JobListingTable.$inferInsert
 ) {
-  const [jobListing] = await db.insert(JobListingTable).values(data).returning({
-    id: JobListingTable.id,
-    organizationId: JobListingTable.organizationId,
-  });
+  const [newListing] = await db
+    .insert(JobListingTable)
+    .values(jobListing)
+    .returning({
+      id: JobListingTable.id,
+      organizationId: JobListingTable.organizationId,
+    });
 
-  return jobListing;
+  // revalidateJobListingCache(newListing)
+
+  return newListing;
+}
+
+export async function getJobListingById(id: string, orgId: string) {
+  return await db.query.JobListingTable.findFirst({
+    where: and(
+      eq(JobListingTable.id, id),
+      eq(JobListingTable.organizationId, orgId)
+    ),
+  });
 }

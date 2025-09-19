@@ -8,6 +8,13 @@
       "when": 1754869934712,
       "tag": "0000_complete_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758306480430,
+      "tag": "0001_blushing_mercury",
+      "breakpoints": true
     }
   ]
 }
