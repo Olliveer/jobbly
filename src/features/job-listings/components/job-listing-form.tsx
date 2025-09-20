@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import {
   experienceLevels,
+  JobListingTable,
   jobListingTypes,
   locationRequirements,
   wageIntervals,
@@ -37,15 +38,31 @@ import { StateSelectItems } from "./state-select-items";
 import { MarkdownEditor } from "@/components/markdown/markdown-editor";
 import { Button } from "@/components/ui/button";
 import { LoadingSwap } from "@/components/loading-swap";
-import { createJobListing } from "../actions/actions";
+import { createJobListing, updateJobListing } from "../actions/actions";
 import { toast } from "sonner";
 
 const NON_SELECT_VALUE = "none";
 
-export function JobListingForm() {
+export function JobListingForm({
+  jobListing,
+}: {
+  jobListing: Pick<
+    typeof JobListingTable.$inferSelect,
+    | "id"
+    | "title"
+    | "description"
+    | "experienceLevel"
+    | "locationRequirement"
+    | "type"
+    | "wage"
+    | "wageInterval"
+    | "stateAbbreviation"
+    | "city"
+  >;
+}) {
   const form = useForm({
     resolver: zodResolver(JobListingFormSchema),
-    defaultValues: {
+    defaultValues: jobListing ?? {
       title: "",
       description: "",
       experienceLevel: "junior",
@@ -59,13 +76,23 @@ export function JobListingForm() {
   });
 
   async function onSubmit(values: z.infer<typeof JobListingFormSchema>) {
-    const result = await createJobListing(values);
+    if (jobListing.id) {
+      const result = await updateJobListing(jobListing.id, values);
 
-    if (result.error) {
-      toast.error(result.message);
+      if (result.error) {
+        toast.error(result.message);
+      }
+
+      toast.success("Job listing updated successfully");
+    } else {
+      const result = await createJobListing(values);
+
+      if (result.error) {
+        toast.error(result.message);
+      }
+
+      toast.success("Job listing created successfully");
     }
-
-    toast.success("Job listing created successfully");
   }
 
   return (
@@ -293,7 +320,7 @@ export function JobListingForm() {
           disabled={form.formState.isSubmitting}
         >
           <LoadingSwap isLoading={form.formState.isSubmitting}>
-            Create Job Listing
+            {jobListing ? "Update Job Listing" : "Create Job Listing"}
           </LoadingSwap>
         </Button>
       </form>

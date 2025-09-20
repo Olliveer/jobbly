@@ -34,3 +34,21 @@ export async function getJobListingById(id: string, orgId: string) {
     ),
   });
 }
+
+export async function update(
+  id: string,
+  jobListing: Partial<typeof JobListingTable.$inferInsert>
+) {
+  const [updatedListing] = await db
+    .update(JobListingTable)
+    .set(jobListing)
+    .where(eq(JobListingTable.id, id))
+    .returning({
+      id: JobListingTable.id,
+      organizationId: JobListingTable.organizationId,
+    });
+
+  // revalidateJobListingCache(newListing)
+
+  return updatedListing;
+}
