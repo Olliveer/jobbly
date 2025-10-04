@@ -76,7 +76,7 @@ export function JobListingForm({
   });
 
   async function onSubmit(values: z.infer<typeof JobListingFormSchema>) {
-    if (jobListing.id) {
+    if (jobListing) {
       const result = await updateJobListing(jobListing.id, values);
 
       if (result.error) {
@@ -88,7 +88,7 @@ export function JobListingForm({
       const result = await createJobListing(values);
 
       if (result.error) {
-        toast.error(result.message);
+        return toast.error(result.message);
       }
 
       toast.success("Job listing created successfully");
@@ -132,7 +132,7 @@ export function JobListingForm({
                         field.onChange(
                           isNaN(e.target.valueAsNumber)
                             ? null
-                            : e.target.valueAsNumber
+                            : e.target.valueAsNumber,
                         )
                       }
                     />
