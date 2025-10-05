@@ -40,8 +40,10 @@ const ActionButton: React.FC<ActionButtonProps> = ({
         toast.success(result.message ?? "Action completed");
       }
     });
+  }
 
-    if (requireAreYouSure) {
+  if (requireAreYouSure) {
+    return (
       <AlertDialog open={isLoading ? true : undefined}>
         <AlertDialogTrigger asChild>
           <Button {...props} />
@@ -65,8 +67,8 @@ const ActionButton: React.FC<ActionButtonProps> = ({
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>;
-    }
+      </AlertDialog>
+    );
   }
 
   return (

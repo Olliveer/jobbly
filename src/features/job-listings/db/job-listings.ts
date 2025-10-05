@@ -11,7 +11,7 @@ export async function getMostReccentJobListing({ orgId }: { orgId: string }) {
 }
 
 export async function insertJobListing(
-  jobListing: typeof JobListingTable.$inferInsert
+  jobListing: typeof JobListingTable.$inferInsert,
 ) {
   const [newListing] = await db
     .insert(JobListingTable)
@@ -30,14 +30,14 @@ export async function getJobListingById(id: string, orgId: string) {
   return await db.query.JobListingTable.findFirst({
     where: and(
       eq(JobListingTable.id, id),
-      eq(JobListingTable.organizationId, orgId)
+      eq(JobListingTable.organizationId, orgId),
     ),
   });
 }
 
 export async function update(
   id: string,
-  jobListing: Partial<typeof JobListingTable.$inferInsert>
+  jobListing: Partial<typeof JobListingTable.$inferInsert>,
 ) {
   const [updatedListing] = await db
     .update(JobListingTable)
@@ -51,4 +51,18 @@ export async function update(
   // revalidateJobListingCache(newListing)
 
   return updatedListing;
+}
+
+export async function deleteJobListingDb(id: string) {
+  const [deletedJobListing] = await db
+    .delete(JobListingTable)
+    .where(eq(JobListingTable.id, id))
+    .returning({
+      id: JobListingTable.id,
+      organizationId: JobListingTable.organizationId,
+    });
+
+  // revalidateJobListingCache(newListing)
+
+  return deletedJobListing;
 }

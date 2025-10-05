@@ -80,7 +80,7 @@ export function JobListingForm({
       const result = await updateJobListing(jobListing.id, values);
 
       if (result.error) {
-        toast.error(result.message);
+        return toast.error(result.message);
       }
 
       toast.success("Job listing updated successfully");

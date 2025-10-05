@@ -51,12 +51,12 @@ export default function JobListingBadges({
 
   return (
     <>
-      {!isFeatured ? (
+      {isFeatured ? (
         <Badge
           {...badgeProps}
           className={cn(
             className,
-            "border-featured bg-featured/50 text-featured-foreground"
+            "border-featured bg-featured/50 text-featured-foreground",
           )}
         >
           <StarIcon /> Featured

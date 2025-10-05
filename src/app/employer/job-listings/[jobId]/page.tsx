@@ -11,15 +11,29 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobListingStatus } from "@/drizzle/schema";
-import { toggleJobListingStatus } from "@/features/job-listings/actions/actions";
+import {
+  deleteJobListing,
+  toggleJobListingFeature,
+  toggleJobListingStatus,
+} from "@/features/job-listings/actions/actions";
 import JobListingBadges from "@/features/job-listings/components/job-listing-badges";
 import { getJobListingById } from "@/features/job-listings/db/job-listings";
 import { formatJobListingStatus } from "@/features/job-listings/lib/formatters";
-import { hasReachedMaxPublishedJobListings } from "@/features/job-listings/lib/plan-features-helpers";
+import {
+  hasReachedMaxFeaturedJobListings,
+  hasReachedMaxPublishedJobListings,
+} from "@/features/job-listings/lib/plan-features-helpers";
 import { getNextJobListingStatus } from "@/features/job-listings/lib/utils";
 import { getCurrenOrganization } from "@/services/clerk/lib/get-current-organization";
 import { hasOrgPermission } from "@/services/clerk/lib/orgUserPermissions";
-import { EditIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import {
+  EditIcon,
+  EyeIcon,
+  EyeOffIcon,
+  StarIcon,
+  StarOffIcon,
+  Trash2Icon,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReactNode, Suspense } from "react";
@@ -76,6 +90,26 @@ async function SuspendedPage({ params }: Props) {
             </Button>
           </AsyncCan>
           <StatusUpdateButton status={jobListing.status} id={jobListing.id} />
+          {jobListing.status === "published" ? (
+            <FeaturedToggleUpdateButton
+              isFeatured={jobListing.isFeatured}
+              id={jobListing.id}
+            />
+          ) : null}
+          <AsyncCan
+            condition={() =>
+              hasOrgPermission("org:job_listing_manager:job_listings_delete")
+            }
+            loadingFallback={<Skeleton className="w-10 h-10" />}
+          >
+            <ActionButton
+              variant="destructive"
+              action={deleteJobListing.bind(null, jobListing.id)}
+              requireAreYouSure
+            >
+              <Trash2Icon className="size-4" />
+            </ActionButton>
+          </AsyncCan>
         </div>
       </div>
 
@@ -128,7 +162,7 @@ function StatusUpdateButton({
           otherwise={
             <UpgradePopover
               buttonText={statusToggleButtonText(status)}
-              popoverText=" You must upgrade your plan to publish more job listings."
+              popoverText="You must upgrade your plan to publish more job listings."
             />
           }
         >
@@ -136,6 +170,52 @@ function StatusUpdateButton({
         </AsyncCan>
       ) : (
         button
+      )}
+    </AsyncCan>
+  );
+}
+
+function FeaturedToggleUpdateButton({
+  isFeatured,
+  id,
+}: {
+  isFeatured: boolean;
+  id: string;
+}) {
+  const button = (
+    <ActionButton
+      action={toggleJobListingFeature.bind(null, id)}
+      variant="outline"
+    >
+      {featureToggleButtonText(isFeatured)}
+    </ActionButton>
+  );
+  return (
+    <AsyncCan
+      condition={() =>
+        hasOrgPermission("org:job_listing_manager:job_listing_change_status")
+      }
+      loadingFallback={<Skeleton className="w-10 h-10" />}
+    >
+      {isFeatured ? (
+        button
+      ) : (
+        <AsyncCan
+          condition={async () => {
+            const isMaxed = await hasReachedMaxFeaturedJobListings();
+
+            return !isMaxed;
+          }}
+          loadingFallback={<Skeleton className="w-10 h-10" />}
+          otherwise={
+            <UpgradePopover
+              buttonText={featureToggleButtonText(isFeatured)}
+              popoverText="You must upgrade your plan to feature more job listings."
+            />
+          }
+        >
+          {button}
+        </AsyncCan>
       )}
     </AsyncCan>
   );
@@ -181,4 +261,20 @@ function statusToggleButtonText(status: JobListingStatus) {
     default:
       throw new Error(`Invalid job listing status: ${status}`);
   }
+}
+
+function featureToggleButtonText(isFeatured: boolean) {
+  if (isFeatured) {
+    return (
+      <>
+        <StarOffIcon className="size-4" /> Unfeature
+      </>
+    );
+  }
+
+  return (
+    <>
+      <StarIcon className="size-4" /> Feature
+    </>
+  );
 }

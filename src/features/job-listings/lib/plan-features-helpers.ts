@@ -1,5 +1,8 @@
 import { getCurrenOrganization } from "@/services/clerk/lib/get-current-organization";
-import { getPublishedJobListingsCount } from "../actions/actions";
+import {
+  getFeaturedJobListingsCount,
+  getPublishedJobListingsCount,
+} from "../actions/actions";
 import { hasPlanFeature } from "@/services/clerk/lib/planFeatures";
 
 export async function hasReachedMaxPublishedJobListings() {
@@ -18,4 +21,21 @@ export async function hasReachedMaxPublishedJobListings() {
   ]);
 
   return !canPost.some(Boolean);
+}
+
+export async function hasReachedMaxFeaturedJobListings() {
+  const { orgId } = await getCurrenOrganization({});
+
+  if (!orgId) {
+    return true;
+  }
+
+  const count = await getFeaturedJobListingsCount(orgId);
+
+  const canFeature = await Promise.all([
+    hasPlanFeature("1_featured_job_listing").then((has) => has && count < 1),
+    hasPlanFeature("job_listing_manager:unlimited_featured_job_listings"),
+  ]);
+
+  return !canFeature.some(Boolean);
 }
