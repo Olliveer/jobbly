@@ -53,6 +53,7 @@ export async function update(
   return updatedListing;
 }
 
+// TODO: not working
 export async function deleteJobListingDb(id: string) {
   const [deletedJobListing] = await db
     .delete(JobListingTable)

@@ -12,14 +12,35 @@ import {
 } from "../db/job-listings";
 import { hasOrgPermission } from "@/services/clerk/lib/orgUserPermissions";
 import { db } from "@/drizzle/db";
-import { and, count, eq } from "drizzle-orm";
-import { JobListingTable } from "@/drizzle/schema";
+import { and, count, desc, eq } from "drizzle-orm";
+import { JobListingApplicationTable, JobListingTable } from "@/drizzle/schema";
 import { getNextJobListingStatus } from "../lib/utils";
 import {
   hasReachedMaxFeaturedJobListings,
   hasReachedMaxPublishedJobListings,
 } from "../lib/plan-features-helpers";
 import { revalidatePath } from "next/cache";
+
+export async function getJobListings({ orgId }: { orgId: string }) {
+  // "use cache";
+  const jobListings = await db
+    .select({
+      id: JobListingTable.id,
+      title: JobListingTable.title,
+      status: JobListingTable.status,
+      applicationCount: count(JobListingApplicationTable.userId),
+    })
+    .from(JobListingTable)
+    .where(eq(JobListingTable.organizationId, orgId))
+    .leftJoin(
+      JobListingApplicationTable,
+      eq(JobListingApplicationTable.jobListingId, JobListingTable.id),
+    )
+    .groupBy(JobListingTable.id, JobListingApplicationTable.jobListingId)
+    .orderBy(desc(JobListingTable.createdAt));
+
+  return jobListings;
+}
 
 export async function createJobListing(
   unsafeData: z.infer<typeof JobListingFormSchema>,
