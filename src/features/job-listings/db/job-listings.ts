@@ -1,6 +1,70 @@
+import { searchParamsSchema } from "@/components/job-listing-items";
 import { db } from "@/drizzle/db";
 import { JobListingTable } from "@/drizzle/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, SQL, or, ilike } from "drizzle-orm";
+import { z } from "zod";
+
+export async function getJobListings({
+  jobId,
+  searchParam,
+}: {
+  jobId?: string;
+  searchParam?: z.infer<typeof searchParamsSchema>;
+}) {
+  // "use cache";
+  const whereClause: (SQL | undefined)[] = [];
+
+  if (searchParam?.title) {
+    whereClause.push(ilike(JobListingTable.title, `%${searchParam.title}%`));
+  }
+
+  if (searchParam?.locationRequirements) {
+    whereClause.push(
+      eq(JobListingTable.locationRequirement, searchParam.locationRequirements),
+    );
+  }
+
+  if (searchParam?.city) {
+    whereClause.push(ilike(JobListingTable.city, `%${searchParam.city}%`));
+  }
+
+  if (searchParam?.state) {
+    whereClause.push(
+      ilike(JobListingTable.stateAbbreviation, `%${searchParam.state}%`),
+    );
+  }
+
+  if (searchParam?.type) {
+    whereClause.push(eq(JobListingTable.type, searchParam.type));
+  }
+
+  if (searchParam?.jobIds) {
+    whereClause.push(
+      or(...searchParam.jobIds.map((id) => eq(JobListingTable.id, id))),
+    );
+  }
+
+  return db.query.JobListingTable.findMany({
+    where: or(
+      jobId
+        ? and(
+            eq(JobListingTable.status, "published"),
+            eq(JobListingTable.id, jobId),
+          )
+        : undefined,
+      and(eq(JobListingTable.status, "published"), ...whereClause),
+    ),
+    with: {
+      organization: {
+        columns: {
+          name: true,
+          imageUrl: true,
+        },
+      },
+    },
+    orderBy: [desc(JobListingTable.isFeatured), desc(JobListingTable.postedAt)],
+  });
+}
 
 export async function getMostReccentJobListing({ orgId }: { orgId: string }) {
   return await db.query.JobListingTable.findFirst({

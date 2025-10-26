@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   //   cacheComponents: true,
   // },
   // transpilePackages: ["next-mdx-remote"],
+  experimental: {
+    cacheComponents: true,
+  },
 };
 
 export default nextConfig;

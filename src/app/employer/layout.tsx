@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { JobListingStatus } from "@/drizzle/schema";
-import { getJobListings } from "@/features/job-listings/actions/actions";
+import { getJobListingsAndGroupedByStatus } from "@/features/job-listings/actions/actions";
 import { JobListingMenuGroup } from "@/features/job-listings/components/job-listings-menu-group";
 import { sortJobListingByStatus } from "@/features/job-listings/lib/utils";
 import { SidebarOrganizationButton } from "@/features/organizations/components/sidebar-organization-button";
@@ -83,7 +83,7 @@ async function LayoutSuspense({ children }: { children: React.ReactNode }) {
 }
 
 async function JobListingMenu({ orgId }: { orgId: string }) {
-  const jobListings = await getJobListings({ orgId });
+  const jobListings = await getJobListingsAndGroupedByStatus({ orgId });
 
   if (
     jobListings.length === 0 &&

@@ -21,7 +21,11 @@ import {
 } from "../lib/plan-features-helpers";
 import { revalidatePath } from "next/cache";
 
-export async function getJobListings({ orgId }: { orgId: string }) {
+export async function getJobListingsAndGroupedByStatus({
+  orgId,
+}: {
+  orgId: string;
+}) {
   // "use cache";
   const jobListings = await db
     .select({
