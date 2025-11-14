@@ -1,6 +1,6 @@
 import { searchParamsSchema } from "@/components/job-listing-items";
 import { db } from "@/drizzle/db";
-import { JobListingTable } from "@/drizzle/schema";
+import { JobListingApplicationTable, JobListingTable } from "@/drizzle/schema";
 import { and, desc, eq, SQL, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,7 +11,7 @@ export async function getJobListings({
   jobId?: string;
   searchParam?: z.infer<typeof searchParamsSchema>;
 }) {
-  // "use cache";
+  "use cache";
   const whereClause: (SQL | undefined)[] = [];
 
   if (searchParam?.title) {
@@ -96,6 +96,34 @@ export async function getJobListingById(id: string, orgId: string) {
       eq(JobListingTable.id, id),
       eq(JobListingTable.organizationId, orgId),
     ),
+    with: {
+      organization: {
+        columns: {
+          id: true,
+          name: true,
+          imageUrl: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getJobListing(id: string) {
+  "use cache";
+  return await db.query.JobListingTable.findFirst({
+    where: and(
+      eq(JobListingTable.id, id),
+      eq(JobListingTable.status, "published"),
+    ),
+    with: {
+      organization: {
+        columns: {
+          id: true,
+          name: true,
+          imageUrl: true,
+        },
+      },
+    },
   });
 }
 
@@ -130,4 +158,32 @@ export async function deleteJobListingDb(id: string) {
   // revalidateJobListingCache(newListing)
 
   return deletedJobListing;
+}
+
+export async function getJobListingApplication({
+  jobId,
+  userId,
+}: {
+  jobId: string;
+  userId: string;
+}) {
+  "use cache";
+
+  return await db.query.JobListingApplicationTable.findFirst({
+    where: and(
+      eq(JobListingApplicationTable.jobListingId, jobId),
+      eq(JobListingApplicationTable.userId, userId),
+    ),
+    with: {
+      jobListing: {
+        columns: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          organizationId: true,
+        },
+      },
+    },
+  });
 }

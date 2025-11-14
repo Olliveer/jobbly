@@ -31,7 +31,7 @@ export const JobListingFormSchema = z
     {
       message: "City is required if location requirement is not remote",
       path: ["city"],
-    }
+    },
   )
   .refine(
     (listing) => {
@@ -43,5 +43,5 @@ export const JobListingFormSchema = z
     {
       message: "State is required if location requirement is not remote",
       path: ["stateAbbreviation"],
-    }
+    },
   );

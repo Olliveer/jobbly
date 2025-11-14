@@ -22,7 +22,7 @@ export const applicationStages = [
 export type ApplicationStage = (typeof applicationStages)[number];
 export const applicationStageEnum = pgEnum(
   "application_stage",
-  applicationStages
+  applicationStages,
 );
 
 export const JobListingApplicationTable = pgTable(
@@ -36,13 +36,13 @@ export const JobListingApplicationTable = pgTable(
     userId: varchar()
       .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
-    coverLetter: text("cover_letter").notNull(),
+    coverLetter: text("cover_letter"),
     rating: integer("rating"),
     stage: applicationStageEnum("stage").notNull().default("applied"),
     createdAt,
     updatedAt,
   },
-  (table) => [primaryKey({ columns: [table.jobListingId, table.userId] })]
+  (table) => [primaryKey({ columns: [table.jobListingId, table.userId] })],
 );
 
 export const jobListingApplicationReferences = relations(
@@ -56,5 +56,5 @@ export const jobListingApplicationReferences = relations(
       fields: [JobListingApplicationTable.userId],
       references: [UserTable.id],
     }),
-  })
+  }),
 );
